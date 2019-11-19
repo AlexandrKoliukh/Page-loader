@@ -1,7 +1,7 @@
 install: install-deps
 
 run:
-	npx babel-node 'src/bin' 10
+	npx babel-node 'src/bin/page-loader.js'
 
 build:
 	rm -rf dist
@@ -9,6 +9,9 @@ build:
 
 test:
 	npm test
+
+develop-test:
+	npx jest --watch
 
 lint:
 	npx eslint .
