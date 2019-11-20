@@ -3,10 +3,10 @@ import fs from 'fs';
 import Path from 'path';
 
 const typeMapping = {
-  directory: (name) => `${name}_files`,
-  html: (name) => `${name}.html`,
-  css: (name) => `${name}.css`,
-  js: (name) => `${name}.js`,
+  directory: name => `${name}_files`,
+  html: name => `${name}.html`,
+  css: name => `${name}.css`,
+  js: name => `${name}.js`,
 };
 
 export const getNameFromLink = (link, type) => {

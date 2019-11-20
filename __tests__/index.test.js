@@ -11,7 +11,7 @@ import parse from '../src/parser';
 axios.defaults.adapter = httpAdapter;
 
 const testLink = 'https://localhost/test';
-const getFixturePath = (fileName) => path.join(__dirname, '..', '__fixtures__', fileName);
+const getFixturePath = fileName => path.join(__dirname, '..', '__fixtures__', fileName);
 
 const resultFileName = getNameFromLink(testLink, 'html');
 
@@ -46,7 +46,7 @@ test('pageLoad safe data', async () => {
 
 test('parse', async () => {
   const data1 = await fs.readFile(getFixturePath('ru-courses.html'), 'utf-8');
-  const expectData1 = [ '/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js' ];
+  const expectData1 = ['/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js'];
   const data2 = await fs.readFile(getFixturePath('google-com.html'), 'utf-8');
   const expectData2 = [
     '/logos/doodles/2019/zinaida-gippius-150th-birthday-6485130628562944.2-l.png',
