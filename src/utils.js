@@ -1,4 +1,4 @@
-import url from "url";
+import url from 'url';
 import fs from 'fs';
 import Path from 'path';
 
@@ -6,7 +6,7 @@ export const getFileNameFromLink = (link) => {
   const { host: hostWitchDomainSpace, path } = url.parse(link);
   const host = hostWitchDomainSpace.split('.')[0];
   const fileName = `${host}${path}`.replace(/[^a-zA-Z1-9]/g, '-');
-  const normalizedFileName = fileName.split('-').filter((i) => i).join('-');
+  const normalizedFileName = fileName.split('-').filter(i => i).join('-');
 
   return `${normalizedFileName}.html`;
 };

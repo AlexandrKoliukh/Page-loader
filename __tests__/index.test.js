@@ -3,9 +3,9 @@ import os from 'os';
 import axios from 'axios';
 import path from 'path';
 import nock from 'nock';
+import httpAdapter from 'axios/lib/adapters/http';
 import { getFileNameFromLink, deleteFolderRecursive } from '../src/utils';
 import loadPage from '../src';
-import httpAdapter from 'axios/lib/adapters/http';
 
 axios.defaults.adapter = httpAdapter;
 
@@ -17,31 +17,28 @@ const resultFileName = getFileNameFromLink(testLink);
 let resultDirPath;
 let nockBody;
 
-beforeAll(async () => {
+beforeEach(async () => {
   resultDirPath = await fs.mkdtemp(path.join(os.tmpdir(), '/'));
   nockBody = await fs.readFile(fixturePath, 'utf-8');
-  // await fs.rmdir(resultDirPath, { recursive: true }).catch(_.noop);
 });
 
-afterAll(() => {
+afterEach(async () => {
   deleteFolderRecursive(resultDirPath);
+  // await fs.rmdir(resultDirPath, { recursive: true })
+  // .catch(_.noop);
 });
-
 
 test('pageLoad safe data', async () => {
-  const scope = await nock('https://localhost')
+  const scope = nock('https://localhost')
     .get('/test')
-    .reply(200, () => nockBody);
+    .reply(200, nockBody);
 
-  let loadedData;
+  await loadPage(testLink, resultDirPath).then(() => console.log('read'));
+  const loadedData = await fs.readFile(
+    path.join(resultDirPath, resultFileName),
+    'utf-8',
+  );
 
-  loadPage(testLink, resultDirPath).then(async () => {
-    loadedData = await fs.readFile(
-      path.join(resultDirPath, resultFileName),
-      'utf-8',
-    );
-    await scope.done();
-    expect(loadedData).toBe(nockBody);
-  });
-
+  await scope.done();
+  expect(loadedData).toBe(nockBody);
 });
