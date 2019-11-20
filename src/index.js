@@ -1,11 +1,11 @@
 import axios from 'axios';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { getFileNameFromLink } from './utils';
+import { getNameFromLink } from './utils';
 
-export default (url, outputPath) => axios.get(url)
+const loadPage = (url, outputPath) => axios.get(url)
   .then((res) => {
-    const resultFilePath = path.join(outputPath, getFileNameFromLink(url));
+    const resultFilePath = path.join(outputPath, getNameFromLink(url, 'html'));
     fs.writeFile(resultFilePath, res.data)
       .catch((error) => {
         throw new Error(`Cant write file ${resultFilePath} ${error}`);
@@ -14,3 +14,5 @@ export default (url, outputPath) => axios.get(url)
   .catch((error) => {
     throw new Error(`Cant fetch ${url} ${error}`);
   });
+
+export default loadPage;

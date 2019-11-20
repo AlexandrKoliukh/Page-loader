@@ -2,13 +2,20 @@ import url from 'url';
 import fs from 'fs';
 import Path from 'path';
 
-export const getFileNameFromLink = (link) => {
-  const { host: hostWitchDomainSpace, path } = url.parse(link);
-  const host = hostWitchDomainSpace.split('.')[0];
-  const fileName = `${host}${path}`.replace(/[^a-zA-Z1-9]/g, '-');
-  const normalizedFileName = fileName.split('-').filter(i => i).join('-');
+const typeMapping = {
+  directory: (name) => `${name}_files`,
+  html: (name) => `${name}.html`,
+  css: (name) => `${name}.css`,
+  js: (name) => `${name}.js`,
+};
 
-  return `${normalizedFileName}.html`;
+export const getNameFromLink = (link, type) => {
+  const { host, path } = url.parse(link);
+  const name = `${host}${path}`.replace(/[^a-zA-Z1-9]/g, '-');
+  const normalizedName = name.split('-').filter(i => i).join('-');
+
+  const a = typeMapping[type](normalizedName);
+  return a;
 };
 
 export const deleteFolderRecursive = (path) => {

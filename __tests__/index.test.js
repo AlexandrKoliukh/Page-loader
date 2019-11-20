@@ -4,22 +4,23 @@ import axios from 'axios';
 import path from 'path';
 import nock from 'nock';
 import httpAdapter from 'axios/lib/adapters/http';
-import { getFileNameFromLink, deleteFolderRecursive } from '../src/utils';
+import { getNameFromLink, deleteFolderRecursive } from '../src/utils';
 import loadPage from '../src';
+import parse from '../src/parser';
 
 axios.defaults.adapter = httpAdapter;
 
 const testLink = 'https://localhost/test';
-const fixturePath = path.join(__dirname, '..', '__fixtures__', 'test.html');
+const getFixturePath = (fileName) => path.join(__dirname, '..', '__fixtures__', fileName);
 
-const resultFileName = getFileNameFromLink(testLink);
+const resultFileName = getNameFromLink(testLink, 'html');
 
 let resultDirPath;
 let nockBody;
 
 beforeEach(async () => {
   resultDirPath = await fs.mkdtemp(path.join(os.tmpdir(), '/'));
-  nockBody = await fs.readFile(fixturePath, 'utf-8');
+  nockBody = await fs.readFile(getFixturePath('test.html'), 'utf-8');
 });
 
 afterEach(async () => {
@@ -41,4 +42,16 @@ test('pageLoad safe data', async () => {
 
   await scope.done();
   expect(loadedData).toBe(nockBody);
+});
+
+test('parse', async () => {
+  const data1 = await fs.readFile(getFixturePath('ru-courses.html'), 'utf-8');
+  const expectData1 = [ '/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js' ];
+  const data2 = await fs.readFile(getFixturePath('google-com.html'), 'utf-8');
+  const expectData2 = [
+    '/logos/doodles/2019/zinaida-gippius-150th-birthday-6485130628562944.2-l.png',
+    '/textinputassistant/tia.png',
+  ];
+  expect(parse(data1)).toEqual(expectData1);
+  expect(parse(data2)).toEqual(expectData2);
 });
