@@ -6,8 +6,9 @@ export const getFileNameFromLink = (link) => {
   const { host: hostWitchDomainSpace, path } = url.parse(link);
   const host = hostWitchDomainSpace.split('.')[0];
   const fileName = `${host}${path}`.replace(/[^a-zA-Z1-9]/g, '-');
+  const normalizedFileName = fileName.split('-').filter((i) => i).join('-');
 
-  return `${fileName}.html`;
+  return `${normalizedFileName}.html`;
 };
 
 export const deleteFolderRecursive = (path) => {

@@ -1,46 +1,47 @@
 import { promises as fs } from 'fs';
+import os from 'os';
 import axios from 'axios';
 import path from 'path';
 import nock from 'nock';
-
 import { getFileNameFromLink, deleteFolderRecursive } from '../src/utils';
-import pageLoad from '../src';
+import loadPage from '../src';
+import httpAdapter from 'axios/lib/adapters/http';
 
-const testLink = 'https://hexlet.io/courses';
-const fileName = 'hexlet-io-courses.html';
-const fixturePath = `${__dirname}/__fixtures__/${fileName}`;
+axios.defaults.adapter = httpAdapter;
+
+const testLink = 'https://localhost/test';
+const fixturePath = path.join(__dirname, '..', '__fixtures__', 'test.html');
 
 const resultFileName = getFileNameFromLink(testLink);
 
 let resultDirPath;
 let nockBody;
 
-beforeEach(async () => {
-  resultDirPath = await fs.mkdtemp(`${__dirname}/`);
+beforeAll(async () => {
+  resultDirPath = await fs.mkdtemp(path.join(os.tmpdir(), '/'));
   nockBody = await fs.readFile(fixturePath, 'utf-8');
+  // await fs.rmdir(resultDirPath, { recursive: true }).catch(_.noop);
 });
 
-afterEach(async () => {
-  // await fs.rmdir(resultDirPath, { recursive: true });
+afterAll(() => {
   deleteFolderRecursive(resultDirPath);
 });
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
 
-test('pageload save data', async () => {
-  const scope = nock('https://hexlet.io')
-    .get('/courses')
+test('pageLoad safe data', async () => {
+  const scope = await nock('https://localhost')
+    .get('/test')
     .reply(200, () => nockBody);
 
-  await pageLoad(testLink, resultDirPath);
+  let loadedData;
 
-  const loadedData = await fs.readFile(
-    path.join(resultDirPath, resultFileName),
-    'utf-8',
-  );
+  loadPage(testLink, resultDirPath).then(async () => {
+    loadedData = await fs.readFile(
+      path.join(resultDirPath, resultFileName),
+      'utf-8',
+    );
+    await scope.done();
+    expect(loadedData).toBe(nockBody);
+  });
 
-  await axios.get('https://hexlet.io/courses');
-  scope.done();
-  expect(loadedData).toBe(nockBody);
 });
-
