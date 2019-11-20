@@ -10,6 +10,9 @@ build:
 test:
 	npm test
 
+test-coverage:
+	npm test -- --coverage
+
 develop-test:
 	npx jest --watch
 
