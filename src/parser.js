@@ -8,9 +8,9 @@ const tagsMapping = {
   script: 'src',
 };
 
-const parse = (data) => {
+const parse = (page) => {
   const links = [];
-  const $ = cheerio.load(data);
+  const $ = cheerio.load(page);
   _.keys(tagsMapping).forEach((el) => {
     $(el).each((i, e) => {
       const a = $(e).attr(tagsMapping[el]);
