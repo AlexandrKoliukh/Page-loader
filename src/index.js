@@ -7,13 +7,7 @@ import parse from './parser';
 const loadPage = (url, outputPath) => axios.get(url)
   .then((res) => {
     const resultFilePath = path.join(outputPath, getNameFromLink(url, 'html'));
-    fs.writeFile(resultFilePath, res.data)
-      .catch((error) => {
-        throw new Error(`Cant write file ${resultFilePath} ${error}`);
-      });
-  })
-  .catch((error) => {
-    throw new Error(`Cant fetch ${url} ${error}`);
+    return fs.writeFile(resultFilePath, res.data);
   });
 
 export const loadResources = (url, page) => {
