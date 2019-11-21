@@ -1,16 +1,21 @@
 import url from 'url';
+import _path from 'path';
 
-const typeMapping = {
-  directory: name => `${name}_files`,
-  html: name => `${name}.html`,
-  css: name => `${name}.css`,
-  js: name => `${name}.js`,
+const getKebabCasedUrl = (uri) => {
+  const { host, path } = url.parse(uri);
+  const name = `${host || ''}${path}`.replace(/[^a-z1-9]/g, '-');
+  return name.split('-').filter(i => i).join('-');
 };
 
-export const getNameFromLink = (link, type) => {
-  const { host, path } = url.parse(link);
-  const name = `${host}${path}`.replace(/[^a-zA-Z1-9]/g, '-');
-  const normalizedName = name.split('-').filter(i => i).join('-');
+export const getNameFromLink = (uri, type = 'file') => {
+  const uriInKebabCase = getKebabCasedUrl(uri);
 
-  return typeMapping[type](normalizedName);
+  switch (type) {
+    case 'file': {
+      const ext = _path.extname(uri) || '.html';
+      return `${uriInKebabCase}${ext}`;
+    }
+    case 'directory': return `${uriInKebabCase}_files`;
+    default: return 'none';
+  }
 };

@@ -1,27 +1,24 @@
 import axios from 'axios';
-import path from 'path';
+import _path from 'path';
 import { promises as fs } from 'fs';
 import { getNameFromLink } from './utils';
-import parse from './parser';
+import extractSourceLinks from './parser';
+import url from "url";
 
-const loadPage = (url, outputPath) => axios.get(url)
-  .then((res) => {
-    const resultFilePath = path.join(outputPath, getNameFromLink(url, 'html'));
-    return fs.writeFile(resultFilePath, res.data);
-  });
+const loadPage = (url, outputPath) => {
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
-export const loadResources = (url, page) => {
-  const relativeLinks = parse(page);
-  const absoluteLinks = relativeLinks.map(i => path.join(url, i));
+  return axios.get(url)
+    .then((res) => {
+      const resultFilePath = _path.join(outputPath, getNameFromLink(url));
+      return fs.writeFile(resultFilePath, res.data);
+    });
+};
 
-  absoluteLinks.forEach((link) => {
-    const type = path.extname(link).split('.')[1];
-    const outputDirPath = getNameFromLink(url, 'directory');
-    const outputFilePath = getNameFromLink(link, type);
-    const outputPath = path.join(outputDirPath, outputFilePath);
+export const loadResources = (url, outputPath, page) => {
+  const relativeLinks = extractSourceLinks(page);
+  const outputDirPath = getNameFromLink(url, 'directory');
 
-    console.log(outputPath);
-  });
 };
 
 export default loadPage;
