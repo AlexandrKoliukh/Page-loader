@@ -44,13 +44,10 @@ const loadResource = (url, link, outputPath) => {
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
   const resultFilePath = _path.join(outputPath, getNameFromLink(link));
 
-  return axios({
-    method: 'get',
-    url,
-    responseType: 'stream',
-  })
-    .then((res) => {
-      return res.data.pipe(createWriteStream(resultFilePath));
+  return axios.get(url, { responseType: 'arraybuffer' })
+    .then(({ data }) => {
+      // return data.pipe(createWriteStream(resultFilePath));
+      return fs.writeFile(resultFilePath, data);
     });
 };
 
