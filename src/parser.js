@@ -3,7 +3,7 @@ import url from 'url';
 import cheerio from 'cheerio';
 
 const tagsMapping = {
-  link: 'src',
+  link: 'href',
   img: 'src',
   script: 'src',
 };
@@ -21,6 +21,7 @@ const parse = (page) => {
     const { host } = url.parse(i);
     return !host;
   });
+
   return relativeLinks;
 };
 

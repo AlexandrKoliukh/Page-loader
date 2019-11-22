@@ -20,45 +20,65 @@ describe('Async', () => {
   const hostname = 'hexlet';
   const pathname = '/courses';
   const testLink = `https://${path.join(hostname, pathname)}`;
-  const resultFileName = getNameFromLink(testLink);
   const hostRegExp = new RegExp(hostname);
 
-  let resultDirPath;
-  let nockBody;
+  let pathToTempDir;
 
-  beforeEach(async () => {
-    resultDirPath = await fs.mkdtemp(path.join(os.tmpdir(), '/'));
-    nockBody = await fs.readFile(getFixturePath('test.html'), 'utf-8');
+  beforeAll(async () => {
+    pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
   });
-  afterEach(async () => {
-    await rimraf(resultDirPath, noop);
+  afterAll(async () => {
+    await rimraf(pathToTempDir, noop);
   });
 
-  test('pageLoad safe data', async () => {
-    const scope = nock(hostRegExp).get(pathname).reply(200, nockBody);
-    const completedPath = path.join(resultDirPath, resultFileName);
-    await loadPage(testLink, resultDirPath);
-    const loadedData = await fs.readFile(completedPath, 'utf-8');
-    scope.done();
-    expect(loadedData).toBe(nockBody);
-  });
-
-  // test('res', async () => {
-  //   const scope = nock(/.*/)
-  //     .get(/.*/)
-  //     .reply(200, nockBody);
+  // test('pageLoad safe html', async () => {
+  //   const nockBody = await fs.readFile(getFixturePath('test.html'), 'utf-8');
+  //   const expectData = await fs.readFile(getFixturePath('testWithChangedLinks.html'), 'utf-8');
   //
-  //
+  //   const resultFileName = getNameFromLink(testLink);
+  //   const scope = nock(hostRegExp).get(pathname).reply(200, nockBody);
+  //   const completedPath = path.join(pathToTempDir, resultFileName);
+  //   await loadPage(testLink, pathToTempDir);
+  //   const loadedData = await fs.readFile(completedPath, 'utf-8');
+  //   scope.done();
+  //   expect(loadedData + '\n').toBe(expectData);
   // });
+
+  test('res', async () => {
+    const page = await fs.readFile(getFixturePath('test.html'), 'utf-8');
+    const applicationJsData = await fs.readFile(getFixturePath('assets/application.js'), 'utf-8');
+    const indexCssData = await fs.readFile(getFixturePath('css/index.css'), 'utf-8');
+    const imgData = await fs.readFile(getFixturePath('images/img.png'), 'utf-8');
+
+    const scope = nock(/localhost/)
+      .get(/application.js/).reply(200, applicationJsData)
+      .get(/index.css/).reply(200, indexCssData)
+      .get(/img.png/).reply(200, imgData);
+
+    const resultDirName = getNameFromLink(testLink, 'directory');
+    await Promise.all(loadResources(testLink, pathToTempDir, page));
+
+    const completedPathToJs = path.join(pathToTempDir, resultDirName, getNameFromLink('assets/application.js'));
+    const completedPathToCss = path.join(pathToTempDir, resultDirName, getNameFromLink('css/index.css'));
+    const completedPathToImg = path.join(pathToTempDir, resultDirName, getNameFromLink('images/img.png'));
+    const loadedDataJs = await fs.readFile(completedPathToJs, 'utf-8');
+    const loadedDataCss = await fs.readFile(completedPathToCss, 'utf-8');
+    const loadedDataImg = await fs.readFile(completedPathToImg, 'utf-8');
+
+    scope.done();
+    expect(loadedDataJs).toBe(applicationJsData);
+    expect(loadedDataCss).toBe(indexCssData);
+    expect(loadedDataImg).toBe(imgData);
+  });
 });
 
 describe('Sync', () => {
   test('parse', async () => {
     const data1 = await fs.readFile(getFixturePath('test.html'), 'utf-8');
     const expectData1 = [
-      'images/img1.jpg',
-      'images/img2.jpg',
-      './assets/application.js'
+      'css/index.css',
+      'images/img.png',
+      'assets/application.js',
     ];
     expect(parse(data1)).toEqual(expectData1);
   });
