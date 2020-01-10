@@ -6,7 +6,7 @@ import nock from 'nock';
 import rimraf from 'rimraf';
 import httpAdapter from 'axios/lib/adapters/http';
 import { getNameFromLink } from '../src/utils';
-import loadPage, { loadResources } from '../src';
+import loadPage from '../src';
 import parse from '../src/parser';
 import { noop } from 'lodash';
 
@@ -67,12 +67,12 @@ describe('Async', () => {
 
 describe('Sync', () => {
   test('parse', async () => {
-    const data1 = await fs.readFile(getFixturePath('test.html'), 'utf-8');
-    const expectData1 = [
+    const parsedData = await fs.readFile(getFixturePath('test.html'), 'utf-8');
+    const expectParsedData = [
       'css/index.css',
       'images/img.png',
       'assets/application.js',
     ];
-    expect(parse(data1)).toEqual(expectData1);
+    expect(parse(parsedData)).toEqual(expectParsedData);
   });
 });

@@ -44,16 +44,15 @@ const loadResource = (url, link, outputPath) => {
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
   const resultFilePath = _path.join(outputPath, getNameFromLink(link));
 
-  return axios.get(url, { responseType: 'arraybuffer' })
+  return axios.get(url, { responseType: 'stream' })
     .then(({ data }) => {
-      // return data.pipe(createWriteStream(resultFilePath));
-      return fs.writeFile(resultFilePath, data);
+      data.pipe(createWriteStream(resultFilePath));
     });
 };
 
 export const loadResources = (url, outputPath, page) => {
   const relativeLinks = extractSourceLinks(page);
-  console.log(relativeLinks);
+
   const resultDirName = getNameFromLink(url, 'directory');
   const resultOutput = _path.join(outputPath, resultDirName);
   fs.mkdir(resultOutput);
