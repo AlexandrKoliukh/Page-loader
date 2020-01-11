@@ -4,19 +4,18 @@ import axios from 'axios';
 import path from 'path';
 import nock from 'nock';
 import rimraf from 'rimraf';
+import { noop } from 'lodash';
 import httpAdapter from 'axios/lib/adapters/http';
 import { getNameFromLink } from '../src/utils';
 import loadPage from '../src';
 import parse from '../src/parser';
-import { noop } from 'lodash';
 
 nock.disableNetConnect();
 axios.defaults.adapter = httpAdapter;
 
 const getFixturePath = fileName => path.join(__dirname, '..', '__fixtures__', fileName);
 
-
-describe('Async', () => {
+describe('load-page', () => {
   const hostname = 'hexlet';
   const pathname = '/courses';
   const testLink = `https://${path.join(hostname, pathname)}`;
@@ -30,7 +29,7 @@ describe('Async', () => {
     await rimraf(pathToTempDir, noop);
   });
 
-  test('pageLoad safe html', async () => {
+  test('pageLoad save html', async () => {
     const responseBodyHtml = await fs.readFile(getFixturePath('test.html'), 'utf-8');
     const responseBodyJs = await fs.readFile(getFixturePath('assets/application.js'), 'utf-8');
     const responseBodyCss = await fs.readFile(getFixturePath('css/index.css'), 'utf-8');
@@ -40,9 +39,12 @@ describe('Async', () => {
 
     const scope = nock(/localhost|hexlet/)
       .get(pathname).reply(200, responseBodyHtml)
-      .get(/application.js/).reply(200, responseBodyJs)
-      .get(/index.css/).reply(200, responseBodyCss)
-      .get(/img.png/).reply(200, responseBodyImg);
+      .get(/application.js/)
+      .reply(200, responseBodyJs)
+      .get(/index.css/)
+      .reply(200, responseBodyCss)
+      .get(/img.png/)
+      .reply(200, responseBodyImg);
 
     await loadPage(testLink, pathToTempDir);
     const completedPath = path.join(pathToTempDir, getNameFromLink(testLink));
@@ -58,14 +60,14 @@ describe('Async', () => {
     const loadedDataImg = await fs.readFile(completedPathToImg, 'utf-8');
 
     scope.done();
-    expect(loadedData + '\n').toBe(expectDataHtml);
+    expect(`${loadedData}\n`).toBe(expectDataHtml);
     expect(loadedDataJs).toBe(responseBodyJs);
     expect(loadedDataCss).toBe(responseBodyCss);
     expect(loadedDataImg).toBe(responseBodyImg);
   });
 });
 
-describe('Sync', () => {
+describe('parser', () => {
   test('parse', async () => {
     const parsedData = await fs.readFile(getFixturePath('test.html'), 'utf-8');
     const expectParsedData = [

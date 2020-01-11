@@ -1,21 +1,21 @@
-import url from 'url';
+import _url from 'url';
 import _path from 'path';
 
-const getKebabCasedUrl = (uri) => {
-  const { host, path } = url.parse(uri);
+export const getKebabCasedUrl = (url) => {
+  const { host, path } = _url.parse(url);
   const name = `${host || ''}${path}`.replace(/[^a-z1-9]/g, '-');
   return name.split('-').filter(i => i).join('-');
 };
 
-export const getNameFromLink = (uri, type = 'file') => {
-  const uriInKebabCase = getKebabCasedUrl(uri);
+export const getNameFromLink = (url, type = 'file') => {
+  const urlInKebabCase = getKebabCasedUrl(url);
 
   switch (type) {
     case 'file': {
-      const ext = _path.extname(uri) || '.html';
-      return `${uriInKebabCase}${ext}`;
+      const ext = _path.extname(url) || '.html';
+      return `${urlInKebabCase}${ext}`;
     }
-    case 'directory': return `${uriInKebabCase}_files`;
+    case 'directory': return `${urlInKebabCase}_files`;
     default: return 'none';
   }
 };

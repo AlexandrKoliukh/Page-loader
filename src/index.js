@@ -1,11 +1,16 @@
 import axios from 'axios';
 import _path from 'path';
 import { promises as fs, createWriteStream } from 'fs';
+import cheerio from 'cheerio';
+// import debug from 'debug';
+import _ from 'lodash';
+import _url from 'url';
 import { getNameFromLink } from './utils';
 import extractSourceLinks from './parser';
-import cheerio from 'cheerio';
-import _ from 'lodash';
-import _url from "url";
+
+// const log = debug('page-loader');
+
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
 const tagsMapping = {
   link: 'href',
@@ -27,27 +32,21 @@ const changeLinksInPageToRelative = (page, dir) => {
   return $.html();
 };
 
-const loadPage = (url, outputPath) => {
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-  const sourceDir = getNameFromLink(url, 'directory');
-
-  return axios.get(url)
-    .then((res) => {
-      const resultFilePath = _path.join(outputPath, getNameFromLink(url));
-      const page = res.data;
-      Promise.all(loadResources(url, outputPath, page));
-      return fs.writeFile(resultFilePath, changeLinksInPageToRelative(page, sourceDir));
-    });
-};
 
 const loadResource = (url, link, outputPath) => {
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+  console.log(url);
   const resultFilePath = _path.join(outputPath, getNameFromLink(link));
 
-  return axios.get(url, { responseType: 'stream' })
+  axios({
+    method: 'get',
+    url,
+    responseType: 'stream',
+  })
     .then(({ data }) => {
       data.pipe(createWriteStream(resultFilePath));
-    });
+      // return fs.writeFile(resultFilePath, data);
+    })
+    .catch(error => console.error(error.message));
 };
 
 export const loadResources = (url, outputPath, page) => {
@@ -55,11 +54,28 @@ export const loadResources = (url, outputPath, page) => {
 
   const resultDirName = getNameFromLink(url, 'directory');
   const resultOutput = _path.join(outputPath, resultDirName);
-  fs.mkdir(resultOutput);
-  return relativeLinks.map((link) => {
-    const sourceFileUrl = _path.join(url, link);
-    return loadResource(sourceFileUrl, link, resultOutput);
+  fs.mkdir(resultOutput).then(() => {
+    relativeLinks.forEach((link) => {
+      const origin = new URL(url).origin;
+      const sourceFileUrl = _path.join(origin, link);
+      loadResource(sourceFileUrl, link, resultOutput);
+    });
   });
+};
+
+const loadPage = (url, outputPath) => {
+  const sourceDir = getNameFromLink(url, 'directory');
+
+  return axios({
+    method: 'get',
+    url,
+  })
+    .then((res) => {
+      const resultFilePath = _path.join(outputPath, getNameFromLink(url));
+      const page = res.data;
+      loadResources(url, outputPath, page);
+      return fs.writeFile(resultFilePath, changeLinksInPageToRelative(page, sourceDir));
+    });
 };
 
 export default loadPage;
