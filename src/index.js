@@ -10,7 +10,7 @@ import extractSourceLinks from './parser';
 
 // const log = debug('page-loader');
 
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 const tagsMapping = {
   link: 'href',
@@ -56,7 +56,7 @@ export const loadResources = (url, outputPath, page) => {
   const resultOutput = _path.join(outputPath, resultDirName);
   fs.mkdir(resultOutput).then(() => {
     relativeLinks.forEach((link) => {
-      const origin = new URL(url).origin;
+      const { origin } = new URL(url);
       const sourceFileUrl = _path.join(origin, link);
       loadResource(sourceFileUrl, link, resultOutput);
     });
