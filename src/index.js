@@ -2,13 +2,13 @@ import axios from 'axios';
 import _path from 'path';
 import { promises as fs, createWriteStream } from 'fs';
 import cheerio from 'cheerio';
-// import debug from 'debug';
+import debug from 'debug';
 import _ from 'lodash';
 import _url from 'url';
 import { getNameFromLink } from './utils';
 import extractSourceLinks from './parser';
 
-// const log = debug('page-loader');
+const log = debug('page-loader');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
@@ -34,19 +34,18 @@ const changeLinksInPageToRelative = (page, dir) => {
 
 
 const loadResource = (url, link, outputPath) => {
-  console.log(url);
   const resultFilePath = _path.join(outputPath, getNameFromLink(link));
-
   axios({
     method: 'get',
     url,
     responseType: 'stream',
   })
     .then(({ data }) => {
+      log(`Fetch resource ${url} to ${resultFilePath}`);
       data.pipe(createWriteStream(resultFilePath));
       // return fs.writeFile(resultFilePath, data);
     })
-    .catch(error => console.error(error.message));
+    .catch(error => log(`Fetch resource ${url} failed ${error.message}`));
 };
 
 export const loadResources = (url, outputPath, page) => {
@@ -55,6 +54,7 @@ export const loadResources = (url, outputPath, page) => {
   const resultDirName = getNameFromLink(url, 'directory');
   const resultOutput = _path.join(outputPath, resultDirName);
   fs.mkdir(resultOutput).then(() => {
+    log(`Create folder ${resultOutput} for resources`);
     relativeLinks.forEach((link) => {
       const { origin } = new URL(url);
       const sourceFileUrl = _path.join(origin, link);
@@ -71,11 +71,13 @@ const loadPage = (url, outputPath) => {
     url,
   })
     .then((res) => {
+      log(`Fetch page ${url} to ${outputPath}`);
       const resultFilePath = _path.join(outputPath, getNameFromLink(url));
       const page = res.data;
       loadResources(url, outputPath, page);
       return fs.writeFile(resultFilePath, changeLinksInPageToRelative(page, sourceDir));
-    });
+    })
+    .catch(error => log(`Fetch page ${url} failed ${error.message}`));
 };
 
 export default loadPage;

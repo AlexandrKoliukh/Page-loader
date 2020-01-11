@@ -14,7 +14,7 @@ test-coverage:
 	npm test -- --coverage
 
 develop-test:
-	npx jest --watch
+	DEBUG=page-loader npx jest --watch
 
 lint:
 	npx eslint .
