@@ -35,7 +35,7 @@ const changeLinksInPageToRelative = (page, dir) => {
 
 const loadResource = (url, link, outputPath) => {
   const resultFilePath = _path.join(outputPath, getNameFromLink(link));
-  axios({
+  return axios({
     method: 'get',
     url,
     responseType: 'stream',
@@ -45,7 +45,10 @@ const loadResource = (url, link, outputPath) => {
       data.pipe(createWriteStream(resultFilePath));
       // return fs.writeFile(resultFilePath, data);
     })
-    .catch(error => log(`Fetch resource ${url} failed ${error.message}`));
+    .catch((error) => {
+      console.error(error.message);
+      log(`Fetch resource ${url} failed ${error.message}`);
+    });
 };
 
 export const loadResources = (url, outputPath, page) => {
@@ -53,12 +56,16 @@ export const loadResources = (url, outputPath, page) => {
 
   const resultDirName = getNameFromLink(url, 'directory');
   const resultOutput = _path.join(outputPath, resultDirName);
-  fs.mkdir(resultOutput).then(() => {
+  return fs.mkdir(resultOutput).then(() => {
     log(`Create folder ${resultOutput} for resources`);
     relativeLinks.forEach((link) => {
       const { origin } = new URL(url);
       const sourceFileUrl = _path.join(origin, link);
-      loadResource(sourceFileUrl, link, resultOutput);
+      loadResource(sourceFileUrl, link, resultOutput)
+        .catch((error) => {
+          console.error(error.message);
+          log(`Resource ${sourceFileUrl} loading error - ${error.message}`);
+        });
     });
   });
 };
@@ -66,18 +73,20 @@ export const loadResources = (url, outputPath, page) => {
 const loadPage = (url, outputPath) => {
   const sourceDir = getNameFromLink(url, 'directory');
 
-  return axios({
-    method: 'get',
-    url,
-  })
+  return axios.get(url)
     .then((res) => {
-      log(`Fetch page ${url} to ${outputPath}`);
+      log(`Load page ${url} to ${outputPath}`);
       const resultFilePath = _path.join(outputPath, getNameFromLink(url));
       const page = res.data;
-      loadResources(url, outputPath, page);
-      return fs.writeFile(resultFilePath, changeLinksInPageToRelative(page, sourceDir));
+      const newPage = changeLinksInPageToRelative(page, sourceDir);
+      fs.writeFile(resultFilePath, newPage)
+        .catch((error) => {
+          console.error(error.message);
+          log(`Writing to ${resultFilePath} error, ${error.message}`);
+        });
+      return res;
     })
-    .catch(error => log(`Fetch page ${url} failed ${error.message}`));
+    .then(({ data }) => loadResources(url, outputPath, data));
 };
 
 export default loadPage;

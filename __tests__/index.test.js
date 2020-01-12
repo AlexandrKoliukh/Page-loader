@@ -65,6 +65,18 @@ describe('load-page', () => {
     expect(loadedDataCss).toBe(responseBodyCss);
     expect(loadedDataImg).toBe(responseBodyImg);
   });
+
+  test('error 404', async () => {
+    nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
+    const loadPromise = await loadPage('https://hexlet.io/wrongpath', pathToTempDir);
+    await expect(loadPromise).rejects.toThrow('Request failed with status code 404');
+  });
+
+  test('wrong directory', async () => {
+    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200);
+    const loadPromise = await loadPage('https://hexlet.io/wrongdirectory', `${pathToTempDir}errorName`);
+    await expect(loadPromise).rejects.toThrow('connect ECONNREFUSED 127.0.0.1:80');
+  });
 });
 
 describe('parser', () => {
