@@ -48,7 +48,7 @@ const loadResource = (url, link, outputPath) => {
     .catch((error) => {
       console.error(error.message);
       log(`Fetch resource ${url} failed ${error.message}`);
-    });
+    })
 };
 
 export const loadResources = (url, outputPath, page) => {

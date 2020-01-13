@@ -24,6 +24,7 @@ describe('load-page', () => {
 
   beforeAll(async () => {
     pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
+    nock.cleanAll();
   });
   afterAll(async () => {
     await rimraf(pathToTempDir, noop);
@@ -73,7 +74,7 @@ describe('load-page', () => {
   });
 
   test('wrong directory', async () => {
-    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200);
+    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200, '');
     const loadPromise = await loadPage('https://hexlet.io/wrongdirectory', `${pathToTempDir}errorName`);
     await expect(loadPromise).rejects.toThrow('connect ECONNREFUSED 127.0.0.1:80');
   });
