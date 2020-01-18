@@ -76,7 +76,7 @@ export const loadResources = (url, outputPath, page) => {
     .catch((error) => {
       log(`Create folder ${resultOutput} failed ${error.message}`);
       throw error;
-    })
+    });
 };
 
 const loadPage = (url, outputPath) => {

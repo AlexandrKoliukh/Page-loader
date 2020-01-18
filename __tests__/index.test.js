@@ -77,8 +77,7 @@ describe('parser', () => {
   });
 });
 
- describe('Test exceptions', () => {
-
+describe('Test exceptions', () => {
   test('error 404', async () => {
     const pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
     const scope = await nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
