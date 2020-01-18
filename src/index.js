@@ -5,12 +5,15 @@ import cheerio from 'cheerio';
 import debug from 'debug';
 import _ from 'lodash';
 import _url from 'url';
+import Listr from 'listr';
+import httpAdapter from 'axios/lib/adapters/http';
 import { getNameFromLink } from './utils';
 import extractSourceLinks from './parser';
 
 const log = debug('page-loader');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+axios.defaults.adapter = httpAdapter;
 
 const tagsMapping = {
   link: 'href',
@@ -48,7 +51,7 @@ const loadResource = (url, link, outputPath) => {
     .catch((error) => {
       console.error(error.message);
       log(`Fetch resource ${url} failed ${error.message}`);
-    })
+    });
 };
 
 export const loadResources = (url, outputPath, page) => {
@@ -58,15 +61,17 @@ export const loadResources = (url, outputPath, page) => {
   const resultOutput = _path.join(outputPath, resultDirName);
   return fs.mkdir(resultOutput).then(() => {
     log(`Create folder ${resultOutput} for resources`);
-    relativeLinks.forEach((link) => {
+    return relativeLinks.map((link) => {
       const { origin } = new URL(url);
       const sourceFileUrl = _path.join(origin, link);
-      loadResource(sourceFileUrl, link, resultOutput)
-        .catch((error) => {
-          console.error(error.message);
-          log(`Resource ${sourceFileUrl} loading error - ${error.message}`);
-        });
+      return {
+        title: `Load ${link}`,
+        task: () => loadResource(sourceFileUrl, link, resultOutput),
+      };
     });
+  }).then((tasks) => {
+    const a = new Listr(tasks, { concurrent: true, exitOnError: false });
+    a.run().catch(() => {});
   });
 };
 
@@ -86,7 +91,11 @@ const loadPage = (url, outputPath) => {
         });
       return res;
     })
-    .then(({ data }) => loadResources(url, outputPath, data));
+    .then(({ data }) => loadResources(url, outputPath, data))
+    .catch((error) => {
+      console.error(error.message);
+      log(`Failed to fetch ${url}`);
+    });
 };
 
 export default loadPage;

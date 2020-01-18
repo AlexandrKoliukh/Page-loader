@@ -1,17 +1,14 @@
 import { promises as fs } from 'fs';
 import os from 'os';
-import axios from 'axios';
 import path from 'path';
 import nock from 'nock';
 import rimraf from 'rimraf';
 import { noop } from 'lodash';
-import httpAdapter from 'axios/lib/adapters/http';
 import { getNameFromLink } from '../src/utils';
 import loadPage from '../src';
 import parse from '../src/parser';
 
 nock.disableNetConnect();
-axios.defaults.adapter = httpAdapter;
 
 const getFixturePath = fileName => path.join(__dirname, '..', '__fixtures__', fileName);
 
@@ -66,18 +63,6 @@ describe('load-page', () => {
     expect(loadedDataCss).toBe(responseBodyCss);
     expect(loadedDataImg).toBe(responseBodyImg);
   });
-
-  test('error 404', async () => {
-    nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
-    const loadPromise = await loadPage('https://hexlet.io/wrongpath', pathToTempDir);
-    await expect(loadPromise).rejects.toThrow('Request failed with status code 404');
-  });
-
-  test('wrong directory', async () => {
-    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200, '');
-    const loadPromise = await loadPage('https://hexlet.io/wrongdirectory', `${pathToTempDir}errorName`);
-    await expect(loadPromise).rejects.toThrow('connect ECONNREFUSED 127.0.0.1:80');
-  });
 });
 
 describe('parser', () => {
@@ -91,3 +76,20 @@ describe('parser', () => {
     expect(parse(parsedData)).toEqual(expectParsedData);
   });
 });
+
+/* describe('Test exceptions', () => {
+  const pathToTempDir = fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
+
+  test('error 404', async () => {
+    nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
+    // const loadPromise = await loadPage('https://hexlet.io/wrongpath', pathToTempDir);
+    await expect(new Promise(() => loadPage('https://hexlet.io/wrongpath', pathToTempDir)))
+      .rejects.toThrow('Request failed with status code 404');
+  });
+  test('wrong directory', async () => {
+    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200, '');
+    const loadPromise = await loadPage('https://hexlet.io/wrongdirectory', `${pathToTempDir}/errorName`);
+
+    await expect(loadPromise).rejects.toThrow('connect ECONNREFUSED 127.0.0.1:80');
+  });
+}); */
