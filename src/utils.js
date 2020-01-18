@@ -19,3 +19,8 @@ export const getNameFromLink = (url, type = 'file') => {
     default: return 'none';
   }
 };
+
+export const getHtmlFileName = (url) => {
+  const urlInKebabCase = getKebabCasedUrl(url);
+  return `${urlInKebabCase}.html`;
+};

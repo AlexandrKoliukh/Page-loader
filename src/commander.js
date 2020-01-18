@@ -11,7 +11,7 @@ export default () => {
     .action((url, argv) => {
       const outputPath = argv.output || process.cwd();
       loadPage(url, outputPath)
-        .then(() => console.log(`File loaded to ${outputPath}`))
+        .then(() => console.log(`Page loaded to ${outputPath}`))
         .catch((error) => {
           console.error(error.message);
           process.exit(1);

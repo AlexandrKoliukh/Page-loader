@@ -7,7 +7,7 @@ import _ from 'lodash';
 import _url from 'url';
 import Listr from 'listr';
 import httpAdapter from 'axios/lib/adapters/http';
-import { getNameFromLink } from './utils';
+import { getHtmlFileName, getNameFromLink } from './utils';
 import extractSourceLinks from './parser';
 
 const log = debug('page-loader');
@@ -46,11 +46,10 @@ const loadResource = (url, link, outputPath) => {
     .then(({ data }) => {
       log(`Fetch resource ${url} to ${resultFilePath}`);
       data.pipe(createWriteStream(resultFilePath));
-      // return fs.writeFile(resultFilePath, data);
     })
     .catch((error) => {
-      console.error(error.message);
       log(`Fetch resource ${url} failed ${error.message}`);
+      throw error;
     });
 };
 
@@ -62,17 +61,22 @@ export const loadResources = (url, outputPath, page) => {
   return fs.mkdir(resultOutput).then(() => {
     log(`Create folder ${resultOutput} for resources`);
     return relativeLinks.map((link) => {
-      const { origin } = new URL(url);
-      const sourceFileUrl = _path.join(origin, link);
+      const { protocol } = new URL(url);
+      const resourceUrl = `${protocol}${link}`;
       return {
         title: `Load ${link}`,
-        task: () => loadResource(sourceFileUrl, link, resultOutput),
+        task: () => loadResource(resourceUrl, link, resultOutput),
       };
     });
-  }).then((tasks) => {
-    const a = new Listr(tasks, { concurrent: true, exitOnError: false });
-    a.run().catch(() => {});
-  });
+  })
+    .then((tasks) => {
+      const listr = new Listr(tasks, { concurrent: true, exitOnError: false });
+      listr.run();
+    })
+    .catch((error) => {
+      log(`Create folder ${resultOutput} failed ${error.message}`);
+      throw error;
+    })
 };
 
 const loadPage = (url, outputPath) => {
@@ -81,21 +85,20 @@ const loadPage = (url, outputPath) => {
   return axios.get(url)
     .then((res) => {
       log(`Load page ${url} to ${outputPath}`);
-      const resultFilePath = _path.join(outputPath, getNameFromLink(url));
+      const resultFilePath = _path.join(outputPath, getHtmlFileName(url));
       const page = res.data;
       const newPage = changeLinksInPageToRelative(page, sourceDir);
+
+      return { resultFilePath, newPage, res };
+    })
+    .then(({ resultFilePath, newPage, res }) => {
       fs.writeFile(resultFilePath, newPage)
         .catch((error) => {
-          console.error(error.message);
           log(`Writing to ${resultFilePath} error, ${error.message}`);
         });
       return res;
     })
-    .then(({ data }) => loadResources(url, outputPath, data))
-    .catch((error) => {
-      console.error(error.message);
-      log(`Failed to fetch ${url}`);
-    });
+    .then(({ data }) => loadResources(url, outputPath, data));
 };
 
 export default loadPage;

@@ -77,19 +77,21 @@ describe('parser', () => {
   });
 });
 
-/* describe('Test exceptions', () => {
-  const pathToTempDir = fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
+ describe('Test exceptions', () => {
 
   test('error 404', async () => {
-    nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
-    // const loadPromise = await loadPage('https://hexlet.io/wrongpath', pathToTempDir);
-    await expect(new Promise(() => loadPage('https://hexlet.io/wrongpath', pathToTempDir)))
+    const pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
+    const scope = await nock(/localhost|hexlet/).get(/wrongpath/).reply(404);
+    await expect(loadPage('https://hexlet.io/wrongpath', pathToTempDir))
       .rejects.toThrow('Request failed with status code 404');
+    scope.done();
   });
-  test('wrong directory', async () => {
-    nock(/localhost|hexlet/).get(/wrongdirectory/).reply(200, '');
-    const loadPromise = await loadPage('https://hexlet.io/wrongdirectory', `${pathToTempDir}/errorName`);
 
-    await expect(loadPromise).rejects.toThrow('connect ECONNREFUSED 127.0.0.1:80');
+  test('wrong directory', async () => {
+    const pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
+    const scope = await nock(/localhost|hexlet/).get(/courses/).reply(200, '');
+    await expect(loadPage('https://hexlet.io/courses', `${pathToTempDir}/errorDirectoryName`))
+      .rejects.toThrow();
+    scope.done();
   });
-}); */
+});
