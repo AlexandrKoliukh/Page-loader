@@ -8,15 +8,22 @@
     git clone https://github.com/AlexandrKoliukh/backend-project-lvl3.git
     cd backend-project-lvl3
     npm i
+    npm publish --dry-run
     npm link
 
 ## Usage
 
-    page-loader [options] https://google.com
+    page-loader [options] https://yandex.ru
 
     Options:
       -V, --version        output the version number
       -o, --output [path]  Output path
       -h, --help           output usage information
 
-[![asciicast](https://asciinema.org/a/xttvjwCBIbO7Xh1dhtHXd8JPU.svg)](https://asciinema.org/a/xttvjwCBIbO7Xh1dhtHXd8JPU)
+[![asciicast](https://asciinema.org/a/OC8E4iFmXvApSxnBEamyHARU3.svg)](https://asciinema.org/a/OC8E4iFmXvApSxnBEamyHARU3)
+
+## Debug
+
+    DEBUG=page-loader page-loader https://yandex.ru
+
+[![asciicast](https://asciinema.org/a/1gnXTH8UvpJeSUJewYDheoefB.svg)](https://asciinema.org/a/1gnXTH8UvpJeSUJewYDheoefB)
