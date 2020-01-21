@@ -2,8 +2,6 @@ import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import nock from 'nock';
-import rimraf from 'rimraf';
-import { noop } from 'lodash';
 import { getNameFromLink } from '../src/utils';
 import loadPage from '../src';
 import parse from '../src/parser';
@@ -22,9 +20,6 @@ describe('load-page', () => {
   beforeAll(async () => {
     pathToTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'test-'));
     nock.cleanAll();
-  });
-  afterAll(async () => {
-    await rimraf(pathToTempDir, noop);
   });
 
   test('pageLoad save html', async () => {
@@ -58,7 +53,7 @@ describe('load-page', () => {
     const loadedDataImg = await fs.readFile(completedPathToImg, 'utf-8');
 
     scope.done();
-    expect(`${loadedData}\n`).toBe(expectDataHtml);
+    expect(loadedData.trim()).toBe(expectDataHtml.trim());
     expect(loadedDataJs).toBe(responseBodyJs);
     expect(loadedDataCss).toBe(responseBodyCss);
     expect(loadedDataImg).toBe(responseBodyImg);

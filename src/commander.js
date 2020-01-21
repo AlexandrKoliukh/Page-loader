@@ -7,11 +7,11 @@ export default () => {
     .version(version)
     .description('Load page')
     .arguments('<pageUrl>')
-    .option('-o, --output [path]', 'Output folder')
+    .option('-o, --output [path]', 'Output folder', process.cwd())
     .action((url, argv) => {
-      const outputPath = argv.output || process.cwd();
-      loadPage(url, outputPath)
-        .then(() => console.log(`Page loaded to ${outputPath}`))
+      const { output } = argv;
+      loadPage(url, output)
+        .then(() => console.log(`Page loaded to ${output}`))
         .catch((error) => {
           console.error(error.message);
           process.exit(1);

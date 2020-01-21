@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { keys } from 'lodash';
 import url from 'url';
 import cheerio from 'cheerio';
 
@@ -11,7 +11,7 @@ const tagsMapping = {
 const parse = (page) => {
   const links = [];
   const $ = cheerio.load(page);
-  _.keys(tagsMapping).forEach((el) => {
+  keys(tagsMapping).forEach((el) => {
     $(el).each((i, e) => {
       const a = $(e).attr(tagsMapping[el]);
       if (a) links.push(a);

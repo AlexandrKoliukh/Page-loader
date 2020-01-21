@@ -1,19 +1,18 @@
 import axios from 'axios';
-import _path from 'path';
-import { promises as fs, createWriteStream } from 'fs';
+import path from 'path';
+import { createWriteStream, promises as fs } from 'fs';
 import cheerio from 'cheerio';
 import debug from 'debug';
-import _ from 'lodash';
-import _url from 'url';
+import { keys } from 'lodash';
+import url from 'url';
 import Listr from 'listr';
-import httpAdapter from 'axios/lib/adapters/http';
 import { getHtmlFileName, getNameFromLink } from './utils';
 import extractSourceLinks from './parser';
 
 const log = debug('page-loader');
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-axios.defaults.adapter = httpAdapter;
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+// axios.defaults.adapter = httpAdapter;
 
 const tagsMapping = {
   link: 'href',
@@ -23,45 +22,45 @@ const tagsMapping = {
 
 const changeLinksInPageToRelative = (page, dir) => {
   const $ = cheerio.load(page);
-  _.keys(tagsMapping).forEach((tag) => {
+  keys(tagsMapping).forEach((tag) => {
     $(tag).each((index, element) => {
       const temp = $(element).attr(tagsMapping[tag]);
       if (!temp) return;
-      const { host } = _url.parse(temp);
+      const { host } = url.parse(temp);
       if (host) return;
-      if (temp) $(element).attr(tagsMapping[tag], _path.join(dir, getNameFromLink(temp)));
+      if (temp) $(element).attr(tagsMapping[tag], path.join(dir, getNameFromLink(temp)));
     });
   });
   return $.html();
 };
 
 
-const loadResource = (url, link, outputPath) => {
-  const resultFilePath = _path.join(outputPath, getNameFromLink(link));
+const loadResource = (loadedUrl, link, outputPath) => {
+  const resultFilePath = path.join(outputPath, getNameFromLink(link));
   return axios({
     method: 'get',
-    url,
+    url: loadedUrl,
     responseType: 'stream',
   })
     .then(({ data }) => {
-      log(`Fetch resource ${url} to ${resultFilePath}`);
+      log(`Fetch resource ${loadedUrl} to ${resultFilePath}`);
       data.pipe(createWriteStream(resultFilePath));
     })
     .catch((error) => {
-      log(`Fetch resource ${url} failed ${error.message}`);
+      log(`Fetch resource ${loadedUrl} failed ${error.message}`);
       throw error;
     });
 };
 
-export const loadResources = (url, outputPath, page) => {
+export const loadResources = (loadedUrl, outputPath, page) => {
   const relativeLinks = extractSourceLinks(page);
 
-  const resultDirName = getNameFromLink(url, 'directory');
-  const resultOutput = _path.join(outputPath, resultDirName);
+  const resultDirName = getNameFromLink(loadedUrl, 'directory');
+  const resultOutput = path.join(outputPath, resultDirName);
   return fs.mkdir(resultOutput).then(() => {
     log(`Create folder ${resultOutput} for resources`);
     return relativeLinks.map((link) => {
-      const { protocol } = new URL(url);
+      const { protocol } = new URL(loadedUrl);
       const resourceUrl = `${protocol}${link}`;
       return {
         title: `Load ${link}`,
@@ -79,26 +78,24 @@ export const loadResources = (url, outputPath, page) => {
     });
 };
 
-const loadPage = (url, outputPath) => {
-  const sourceDir = getNameFromLink(url, 'directory');
+const loadPage = (loadedUrl, outputPath) => {
+  const sourceDir = getNameFromLink(loadedUrl, 'directory');
 
-  return axios.get(url)
+  return axios.get(loadedUrl)
     .then((res) => {
-      log(`Load page ${url} to ${outputPath}`);
-      const resultFilePath = _path.join(outputPath, getHtmlFileName(url));
+      log(`Load page ${loadedUrl} to ${outputPath}`);
+      const resultFilePath = path.join(outputPath, getHtmlFileName(loadedUrl));
       const page = res.data;
       const newPage = changeLinksInPageToRelative(page, sourceDir);
 
       return { resultFilePath, newPage, res };
     })
-    .then(({ resultFilePath, newPage, res }) => {
-      fs.writeFile(resultFilePath, newPage)
-        .catch((error) => {
-          log(`Writing to ${resultFilePath} error, ${error.message}`);
-        });
-      return res;
-    })
-    .then(({ data }) => loadResources(url, outputPath, data));
+    .then(({ resultFilePath, newPage, res }) => fs.writeFile(resultFilePath, newPage)
+      .then(() => loadResources(loadedUrl, outputPath, res.data))
+      .catch((error) => {
+        log(`Writing to ${resultFilePath} error, ${error.message}`);
+        throw error;
+      }));
 };
 
 export default loadPage;
